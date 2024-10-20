@@ -1,16 +1,29 @@
-from pydantic import BaseModel
+# schemas.py
 
-import datetime
+from pydantic import BaseModel
+from datetime import datetime
 
 class TaskBase(BaseModel):
+    """
+    Базовая схема задачи с общими полями.
+    """
     title: str
-    description : str
-    due_date : datetime.datetime
+    description: str
+    due_date: datetime
 
-class TaskCreate(TaskBase): # Используется при получении данных от клиента для создания новой задачи.
+class TaskCreate(TaskBase):
+    """
+    Схема для создания новой задачи.
+    Наследуется от TaskBase и может содержать дополнительные поля при необходимости.
+    """
     pass
 
-class TaskOut(TaskBase): #  Используется для возврата информации о задаче клиенту, включая её уникальный идентификатор.
-    id : int
+class Task(TaskBase):
+    """
+    Схема для отображения задачи с дополнительными полями.
+    """
+    id: int
+    created_at: datetime
+
     class Config:
-        orm_mode = True
+        orm_mode = True  # Включаем поддержку ORM для автоматического преобразования
