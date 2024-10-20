@@ -1,22 +1,24 @@
 from logging.config import fileConfig
+import sys
+import os
+
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
-# Импортируйте ваш engine и Base
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))  # Добавляем корень проекта в путь
+# Добавляем путь к корню проекта
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from database import engine, Base  # Предполагается, что database.py находится в корне проекта
+# Импортируем SQLALCHEMY_DATABASE_URL и Base из database.py
+from database import SQLALCHEMY_DATABASE_URL, Base
+import models  # Импортируем ваши модели
 
 # Этот файл конфигурации Alembic использует файл .ini для настроек.
-# Возьмите конфигурацию из alembic.ini и установите переменные.
 config = context.config
 
-# Устанавливаем переменные соединения из объекта engine, если они не заданы в alembic.ini
-# В данном случае мы не используем sqlalchemy.url из alembic.ini
+# Устанавливаем строку подключения к базе данных
+config.set_main_option('sqlalchemy.url', SQLALCHEMY_DATABASE_URL)
 
 # Настройка логирования из файла конфигурации alembic.ini
 if config.config_file_name is not None:
@@ -25,14 +27,14 @@ if config.config_file_name is not None:
 # Добавляем модель (метаданные) для автогенерации миграций
 target_metadata = Base.metadata
 
-# Включаем поддержку 'autogenerate'
 def run_migrations_offline():
-    """Run migrations in 'offline' mode."""
-    url = engine.url
+    """Запуск миграций в оффлайн режиме."""
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
+        compare_type=True,
         dialect_opts={"paramstyle": "named"},
     )
 
@@ -40,13 +42,18 @@ def run_migrations_offline():
         context.run_migrations()
 
 def run_migrations_online():
-    """Run migrations in 'online' mode."""
-    connectable = engine
+    """Запуск миграций в онлайн режиме."""
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section),
+        prefix='sqlalchemy.',
+        poolclass=pool.NullPool,
+    )
 
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
+            compare_type=True,
         )
 
         with context.begin_transaction():

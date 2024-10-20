@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime
-from .database import Base
+from database import Base
 import datetime
 
 class Task(Base):
@@ -9,4 +9,3 @@ class Task(Base):
     title = Column(String,  index=True) # заголовок задачи.
     description = Column(String, index = True) # описание задачи.
     due_date = Column(DateTime,default = datetime.datetime.utcnow)
-    
